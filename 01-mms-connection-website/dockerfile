@@ -1,15 +1,14 @@
-FROM ubuntu
+# Use official lightweight Nginx image
+FROM nginx:alpine
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Remove default Nginx HTML files
+RUN rm -rf /usr/share/nginx/html/*
 
-RUN apt-get update && \
-    apt-get install -y nginx && \
-    apt-get clean
+# Copy your static website to Nginx serving directory
+COPY . /usr/share/nginx/html
 
-WORKDIR /var/www/html
-
-COPY . /var/www/html
-
+# Expose port 80
 EXPOSE 80
 
-CMD [ "nginx", "-g", "daemon off;" ]
+# Start Nginx in foreground
+CMD ["nginx", "-g", "daemon off;"]

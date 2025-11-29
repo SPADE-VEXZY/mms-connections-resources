@@ -1,15 +1,10 @@
-FROM ubuntu
+FROM php:alpine
 
-ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
 
-RUN apt-get update && \
-    apt-get install -y nginx && \
-    apt-get clean
+COPY . .
 
-WORKDIR /var/www/html
+EXPOSE 8000
 
-COPY . /var/www/html
+CMD [ "php", "-S", "0.0.0.0:8000" ]
 
-EXPOSE 80
-
-CMD [ "nginx", "-g", "daemon off;" ]

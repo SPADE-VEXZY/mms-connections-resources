@@ -1,0 +1,38 @@
+# 1. Base image
+FROM ubuntu:22.04
+
+# 2. Disable interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 3. Update system and install required tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    nginx \
+    && apt-get clean
+
+# 4. Install Node.js (LTS)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean
+
+# 5. Set working directory
+WORKDIR /app
+
+# 6. Copy project files
+COPY . .
+
+# 7. Install dependencies
+RUN npm install
+
+# 8. Build the project (React, Vue, Angular, etc.)
+RUN npm run build
+
+# 9. Move build files to Nginx HTML folder
+RUN rm -rf /var/www/html/* && \
+    cp -r dist/* /var/www/html/ || cp -r build/* /var/www/html/
+
+# 10. Expose port 80
+EXPOSE 80
+
+# 11. Run nginx in the foreground
+CMD ["nginx", "-g", "daemon off;"]

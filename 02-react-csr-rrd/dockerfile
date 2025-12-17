@@ -1,38 +1,31 @@
-# 1. Base image
-FROM ubuntu:22.04
+# ---------- STAGE 1: Build ----------
+FROM node:18-alpine AS build
 
-# 2. Disable interactive prompts
-ENV DEBIAN_FRONTEND=noninteractive
-
-# 3. Update system and install required tools
-RUN apt-get update && apt-get install -y \
-    curl \
-    nginx \
-    && apt-get clean
-
-# 4. Install Node.js (LTS)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean
-
-# 5. Set working directory
 WORKDIR /app
 
-# 6. Copy project files
+# Copy only package files first (better caching)
+COPY package*.json ./
+
+# Install dependencies (includes Vite)
+RUN npm ci
+
+# Copy rest of the source
 COPY . .
 
-# 7. Install dependencies
-RUN npm install
-
-# 8. Build the project (React, Vue, Angular, etc.)
+# Build the frontend
 RUN npm run build
 
-# 9. Move build files to Nginx HTML folder
-RUN rm -rf /var/www/html/* && \
-    cp -r dist/* /var/www/html/ || cp -r build/* /var/www/html/
+# ---------- STAGE 2: Runtime ----------
+FROM nginx:alpine
 
-# 10. Expose port 80
+# Remove default nginx website
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built files from build stage
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Expose HTTP port
 EXPOSE 80
 
-# 11. Run nginx in the foreground
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
